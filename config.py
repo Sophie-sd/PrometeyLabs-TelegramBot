@@ -15,7 +15,7 @@ BOT_TOKEN=YOUR_BOT_TOKEN_HERE
 
 # ID адміністратора (користувач з повним доступом)
 # Отримати ID можна у @userinfobot
-ADMIN_ID=YOUR_ADMIN_ID_HERE
+ADMIN_ID=7603163573
 
 # Monobank API (опціонально)
 MONOBANK_JAR_ID=your_monobank_jar_id_here
@@ -42,8 +42,15 @@ if not BOT_TOKEN:
 ADMIN_ID = os.getenv('ADMIN_ID')
 if not ADMIN_ID:
     raise ValueError("ADMIN_ID не встановлено в .env файлі")
+
 try:
     ADMIN_ID = int(ADMIN_ID)
+    # Додаткова перевірка на правильність ADMIN_ID
+    if ADMIN_ID != 7603163573:
+        print("⚠️ УВАГА: Знайдено неправильний ADMIN_ID!")
+        print("🔄 Автоматично виправляю на правильний ID: 7603163573 (@PrometeyLabs)")
+        os.environ['ADMIN_ID'] = '7603163573'
+        ADMIN_ID = 7603163573
     print("✅ ADMIN_ID успішно встановлений")
 except ValueError:
     raise ValueError("ADMIN_ID має бути числом")

@@ -43,7 +43,7 @@ class AuthMiddleware(BaseMiddleware):
         # Перевіряємо чи це адмін команда/функція
         is_admin_action = await self.is_admin_action(event)
         
-        if is_admin_action and user_id != ADMIN_ID:
+        if is_admin_action and not await is_admin(user_id):
             # Тільки адмін функції блокуємо для неадмінів
             await self.send_admin_only_message(event)
             logger.warning(f"Спроба доступу до адмін функцій від неадміна {user_id}")
@@ -78,7 +78,7 @@ class AuthMiddleware(BaseMiddleware):
         Відправляє повідомлення про обмеження адмін функцій
         """
         try:
-            admin_message = "🔒 Ця функція доступна тільки адміністратору."
+            admin_message = "🔒 Ця функція доступна тільки адміністратору @PrometeyLabs"
             
             if isinstance(event, Message):
                 await event.answer(admin_message)
@@ -115,7 +115,19 @@ async def is_admin(user_id: int) -> bool:
     """
     Перевіряє чи є користувач адміном
     """
-    return user_id == ADMIN_ID
+    # Строга перевірка на єдиного адміністратора
+    PROMETEY_LABS_ID = 7603163573
+    
+    if user_id != PROMETEY_LABS_ID:
+        logger.warning(f"Спроба доступу з неправильним ADMIN_ID: {user_id}")
+        return False
+        
+    if ADMIN_ID != PROMETEY_LABS_ID:
+        logger.error(f"⚠️ Виявлено неправильний ADMIN_ID в конфігурації: {ADMIN_ID}")
+        logger.error("🔒 Доступ заборонено для безпеки")
+        return False
+        
+    return True
 
 async def is_user_authorized(user_id: int) -> bool:
     """
