@@ -11,10 +11,10 @@ if not os.path.exists('.env'):
     env_content = """# PrometeyLabs Telegram Bot Configuration
 
 # Токен бота (отримати у @BotFather)
-BOT_TOKEN=YOUR_BOT_TOKEN_HERE
+BOT_TOKEN=8112513772:AAFIsM2RNDEQt5tyYCYAuZgpUsGmZUvP31M
 
 # ID адміністратора (користувач з повним доступом)
-# Отримати ID можна у @userinfobot
+# @PrometeyLabs ID: 7603163573
 ADMIN_ID=7603163573
 
 # Monobank API (опціонально)
@@ -26,7 +26,7 @@ ZENEDU_API_KEY=your_zenedu_api_key_here
     try:
         with open('.env', 'w', encoding='utf-8') as f:
             f.write(env_content)
-        print("✅ Створено .env файл з правильним ADMIN_ID=7603163573 (@PrometeyLabs)")
+        print("✅ Створено .env файл з правильним токеном та ADMIN_ID=7603163573 (@PrometeyLabs)")
     except Exception as e:
         print(f"⚠️ Не вдалося створити .env файл: {e}")
 
@@ -34,14 +34,16 @@ ZENEDU_API_KEY=your_zenedu_api_key_here
 load_dotenv(override=True)
 
 # Bot configuration
-BOT_TOKEN = os.getenv('BOT_TOKEN')
-if not BOT_TOKEN:
-    raise ValueError("BOT_TOKEN не встановлено")
+BOT_TOKEN = os.getenv('BOT_TOKEN', '8112513772:AAFIsM2RNDEQt5tyYCYAuZgpUsGmZUvP31M')
+if not BOT_TOKEN or BOT_TOKEN == 'YOUR_BOT_TOKEN_HERE':
+    BOT_TOKEN = '8112513772:AAFIsM2RNDEQt5tyYCYAuZgpUsGmZUvP31M'
+    print("✅ Використовується новий токен бота")
 
 # Admin configuration  
-ADMIN_ID = os.getenv('ADMIN_ID')
+ADMIN_ID = os.getenv('ADMIN_ID', '7603163573')
 if not ADMIN_ID:
-    raise ValueError("ADMIN_ID не встановлено в .env файлі")
+    ADMIN_ID = '7603163573'
+    print("✅ Встановлено ADMIN_ID за замовчуванням")
 
 try:
     ADMIN_ID = int(ADMIN_ID)
@@ -51,9 +53,10 @@ try:
         print("🔄 Автоматично виправляю на правильний ID: 7603163573 (@PrometeyLabs)")
         os.environ['ADMIN_ID'] = '7603163573'
         ADMIN_ID = 7603163573
-    print("✅ ADMIN_ID успішно встановлений")
+    print(f"✅ ADMIN_ID успішно встановлений: {ADMIN_ID} (@PrometeyLabs)")
 except ValueError:
-    raise ValueError("ADMIN_ID має бути числом")
+    print("❌ ADMIN_ID має бути числом, встановлюю за замовчуванням")
+    ADMIN_ID = 7603163573
 
 # Monobank configuration (опціонально)
 MONOBANK_JAR_ID = os.getenv('MONOBANK_JAR_ID')

@@ -12,7 +12,7 @@ from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKe
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 
-from config import ADMIN_ID
+from config import ADMIN_ID, CALLBACK_PREFIXES
 from db import (
     get_users_count, get_active_users_count, get_new_users_count,
     get_courses_count, get_purchases_count, get_users_with_purchases_count,
@@ -51,9 +51,11 @@ router = Router()
 async def admin_command(message: Message):
     """Обробник команди /admin"""
     user_id = message.from_user.id
+    logger.info(f"🔐 Отримано команду /admin від користувача {user_id}")
     
     if not await is_admin(user_id):
-        await message.answer("🔒 Ця команда доступна тільки адміністратору.")
+        logger.warning(f"❌ Користувач {user_id} не є адміном")
+        await message.answer("🔒 Ця команда доступна тільки адміністратору @PrometeyLabs.")
         return
     
     try:
@@ -61,18 +63,20 @@ async def admin_command(message: Message):
             ADMIN_WELCOME_MESSAGE,
             reply_markup=admin_main_menu()
         )
-        logger.info(f"Адмін {user_id} відкрив панель адміністратора")
+        logger.info(f"✅ Адмін {user_id} (@PrometeyLabs) відкрив панель адміністратора")
     except Exception as e:
-        logger.error(f"Помилка в admin_command: {e}")
-        await message.answer(ERROR_MESSAGE)
+        logger.error(f"❌ Помилка в admin_command: {str(e)}", exc_info=True)
+        await message.answer("❌ Сталася помилка. Спробуйте пізніше.")
 
 # Головне адмін меню
-@router.callback_query(F.data == "adm:main")
+@router.callback_query(F.data == f"{CALLBACK_PREFIXES['admin']}main")
 async def admin_main_handler(callback: CallbackQuery):
     """Головне адмін меню"""
     user_id = callback.from_user.id
+    logger.info(f"🔄 Callback {callback.data} від користувача {user_id}")
     
     if not await is_admin(user_id):
+        logger.warning(f"❌ Користувач {user_id} не є адміном")
         await callback.answer("🔒 Доступ заборонено", show_alert=True)
         return
     
@@ -82,15 +86,17 @@ async def admin_main_handler(callback: CallbackQuery):
             reply_markup=admin_main_menu()
         )
         await callback.answer()
+        logger.info(f"✅ Адмін {user_id} повернувся в головне меню")
     except Exception as e:
-        logger.error(f"Помилка в admin_main_handler: {e}")
+        logger.error(f"❌ Помилка в admin_main_handler: {str(e)}", exc_info=True)
         await callback.answer("Помилка завантаження меню")
 
 # Переключення в режим користувача
-@router.callback_query(F.data == "adm:user_mode")
+@router.callback_query(F.data == f"{CALLBACK_PREFIXES['admin']}user_mode")
 async def admin_user_mode_handler(callback: CallbackQuery):
     """Переключення адміна в режим звичайного користувача"""
     user_id = callback.from_user.id
+    logger.info(f"🔄 Callback {callback.data} від користувача {user_id}")
     
     if not await is_admin(user_id):
         await callback.answer("🔒 Доступ заборонено", show_alert=True)
@@ -132,16 +138,19 @@ async def return_to_admin_handler(callback: CallbackQuery):
         await callback.answer("Помилка повернення в адмін панель")
 
 # Аналітика
-@router.callback_query(F.data == "adm:analytics")
+@router.callback_query(F.data == f"{CALLBACK_PREFIXES['admin']}analytics")
 async def admin_analytics_handler(callback: CallbackQuery):
     """Показує аналітику"""
     user_id = callback.from_user.id
+    logger.info(f"📊 Запит аналітики від користувача {user_id}")
     
     if not await is_admin(user_id):
+        logger.warning(f"❌ Користувач {user_id} не є адміном")
         await callback.answer("🔒 Доступ заборонено", show_alert=True)
         return
     
     try:
+        logger.info("🔄 Збираю статистику...")
         # Збираємо статистику
         total_users = await get_users_count()
         new_users_day = await get_new_users_count(days=1)
@@ -167,18 +176,20 @@ async def admin_analytics_handler(callback: CallbackQuery):
             weekly_interactions=weekly_interactions
         )
         
+        logger.info("📊 Відправляю аналітику...")
         await callback.message.edit_text(
             analytics_text,
             reply_markup=admin_back_to_main()
         )
         await callback.answer()
+        logger.info(f"✅ Аналітика успішно відправлена користувачу {user_id}")
         
     except Exception as e:
-        logger.error(f"Помилка в admin_analytics_handler: {e}")
+        logger.error(f"❌ Помилка в admin_analytics_handler: {str(e)}", exc_info=True)
         await callback.answer("Помилка завантаження аналітики")
 
 # Користувачі
-@router.callback_query(F.data == "adm:users")
+@router.callback_query(F.data == f"{CALLBACK_PREFIXES['admin']}users")
 async def admin_users_handler(callback: CallbackQuery):
     """Меню користувачів"""
     user_id = callback.from_user.id
@@ -197,9 +208,8 @@ async def admin_users_handler(callback: CallbackQuery):
         logger.error(f"Помилка в admin_users_handler: {e}")
         await callback.answer("Помилка завантаження меню користувачів")
 
-
 # Управління курсами
-@router.callback_query(F.data == "adm:courses")
+@router.callback_query(F.data == f"{CALLBACK_PREFIXES['admin']}courses")
 async def admin_courses_handler(callback: CallbackQuery):
     """Меню управління курсами"""
     user_id = callback.from_user.id
@@ -219,7 +229,7 @@ async def admin_courses_handler(callback: CallbackQuery):
         await callback.answer("Помилка завантаження меню курсів")
 
 # Синхронізація курсів з ZenEdu
-@router.callback_query(F.data == "adm:sync_courses")
+@router.callback_query(F.data == f"{CALLBACK_PREFIXES['admin']}sync_courses")
 async def admin_sync_courses_handler(callback: CallbackQuery):
     """Синхронізація курсів з ZenEdu"""
     user_id = callback.from_user.id
@@ -249,18 +259,13 @@ async def admin_sync_courses_handler(callback: CallbackQuery):
         total_courses = await get_courses_count()
         
         # Показуємо результат
-        success_text = ADMIN_COURSES_SYNC_SUCCESS.format(
-            total_courses=total_courses,
-            new_courses=synced_courses,
-            updated_courses=0  # TODO: Додати підрахунок оновлених курсів
-        )
-        
         await callback.message.edit_text(
-            success_text,
+            ADMIN_COURSES_SYNC_SUCCESS.format(
+                synced_count=synced_courses,
+                total_count=total_courses
+            ),
             reply_markup=admin_back_to_main()
         )
-        
-        logger.info(f"Адмін {user_id} синхронізував {synced_courses} курсів")
         
     except Exception as e:
         logger.error(f"Помилка в admin_sync_courses_handler: {e}")
@@ -270,7 +275,7 @@ async def admin_sync_courses_handler(callback: CallbackQuery):
         )
 
 # Розсилки
-@router.callback_query(F.data == "adm:broadcasts")
+@router.callback_query(F.data == f"{CALLBACK_PREFIXES['admin']}broadcasts")
 async def admin_broadcasts_handler(callback: CallbackQuery):
     """Меню розсилок"""
     user_id = callback.from_user.id
@@ -281,7 +286,7 @@ async def admin_broadcasts_handler(callback: CallbackQuery):
     
     try:
         await callback.message.edit_text(
-            "📬 Система розсилок\n\nОберіть дію:",
+            "📬 Управління розсилками\n\nОберіть дію:",
             reply_markup=admin_broadcasts_menu()
         )
         await callback.answer()
@@ -290,7 +295,7 @@ async def admin_broadcasts_handler(callback: CallbackQuery):
         await callback.answer("Помилка завантаження меню розсилок")
 
 # Нова розсилка
-@router.callback_query(F.data == "adm:broadcast_new")
+@router.callback_query(F.data == f"{CALLBACK_PREFIXES['admin']}broadcast_new")
 async def admin_broadcast_new_handler(callback: CallbackQuery, state: FSMContext):
     """Початок створення нової розсилки"""
     user_id = callback.from_user.id
@@ -418,7 +423,7 @@ async def broadcast_audience_handler(callback: CallbackQuery, state: FSMContext)
         await callback.answer("Помилка вибору аудиторії")
 
 # Заплановані розсилки
-@router.callback_query(F.data == "adm:broadcast_scheduled")
+@router.callback_query(F.data == f"{CALLBACK_PREFIXES['admin']}broadcast_scheduled")
 async def admin_broadcast_scheduled_handler(callback: CallbackQuery):
     """Показати заплановані розсилки"""
     user_id = callback.from_user.id
@@ -489,7 +494,7 @@ async def admin_broadcast_scheduled_handler(callback: CallbackQuery):
         await callback.answer("Помилка завантаження запланованих розсилок")
 
 # Історія розсилок
-@router.callback_query(F.data == "adm:broadcast_history")
+@router.callback_query(F.data == f"{CALLBACK_PREFIXES['admin']}broadcast_history")
 async def admin_broadcast_history_handler(callback: CallbackQuery):
     """Показати історію розсилок"""
     user_id = callback.from_user.id
