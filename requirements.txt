@@ -1,14 +1,17 @@
 # Core bot framework (сучасна версія 3.x)
 aiogram>=3.4.1
 
+# HTTP server та клієнт (для webhook та API запитів)
+aiohttp>=3.8.0
+
 # Database
 aiosqlite==0.20.0
-
-# HTTP клієнт (сумісний з Python 3.13)
-aiohttp
 
 # Асинхронне планування
 APScheduler==3.10.4
 
 # Конфігурація
-python-dotenv==1.0.1 
+python-dotenv==1.0.1
+
+# Додаткові залежності для Render
+gunicorn>=21.0.0 

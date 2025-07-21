@@ -8,11 +8,11 @@ services:
     healthCheckPath: /health
     envVars:
       - key: BOT_TOKEN
-        sync: false
+        value: "8112513772:AAFIsM2RNDEQt5tyYCYAuZgpUsGmZUvP31M"
       - key: ADMIN_ID
         value: "7603163573"
       - key: WEBHOOK_URL
-        sync: false
+        value: "https://prometeylabs-telegram-bot.onrender.com"
       - key: ZENEDU_API_URL
         value: https://api.zenedu.io/v1
       - key: ZENEDU_API_KEY

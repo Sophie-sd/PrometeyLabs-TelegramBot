@@ -128,4 +128,9 @@ MAX_MESSAGE_LENGTH = 4096
 
 # Часові інтервали
 SESSION_TIMEOUT = 3600  # 1 година
-CACHE_TTL = 1800  # 30 хвилин 
+CACHE_TTL = 1800  # 30 хвилин
+
+# Environment configuration для Render
+ENVIRONMENT = os.getenv('ENVIRONMENT', 'development')  # production або development
+WEBHOOK_URL = os.getenv('WEBHOOK_URL', 'https://prometeylabs-telegram-bot.onrender.com')
+PORT = int(os.getenv('PORT', 8000)) 
