@@ -5,7 +5,7 @@ aiogram==2.25.1
 aiosqlite==0.20.0
 
 # HTTP клієнт (сумісний з Python 3.13)
-aiohttp==3.9.5
+aiohttp
 
 # Асинхронне планування
 APScheduler==3.10.4
