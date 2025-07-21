@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: prometeylabs-telegram-bot
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -k uvicorn.workers.UvicornWorker main:app --bind 0.0.0.0:$PORT --timeout 120 --workers 1
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: BOT_TOKEN
+        sync: false
+      - key: ADMIN_ID
+        value: "7603163573"
+      - key: WEBHOOK_URL
+        sync: false
+      - key: ZENEDU_API_URL
+        value: https://api.zenedu.io/v1
+      - key: ZENEDU_API_KEY
+        value: aKKYBIMaR92RXBxfR2Wp12G9CtFIB6k8E9EJabAM883db9a6
+      - key: DATABASE_PATH
+        value: bot_database.db 

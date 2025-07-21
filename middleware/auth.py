@@ -114,20 +114,31 @@ class AuthMiddleware(BaseMiddleware):
 async def is_admin(user_id: int) -> bool:
     """
     Перевіряє чи є користувач адміном
+    Єдиний адмін: @PrometeyLabs (ID: 7603163573)
     """
-    # Строга перевірка на єдиного адміністратора
-    PROMETEY_LABS_ID = 7603163573
-    
-    if user_id != PROMETEY_LABS_ID:
-        logger.warning(f"Спроба доступу з неправильним ADMIN_ID: {user_id}")
+    try:
+        # Строга перевірка на єдиного адміністратора
+        PROMETEY_LABS_ID = 7603163573  # @PrometeyLabs
+
+        if not isinstance(user_id, int):
+            logger.error(f"❌ Неправильний тип user_id: {type(user_id)}")
+            return False
+
+        if user_id != PROMETEY_LABS_ID:
+            logger.warning(f"❌ Спроба доступу з неправильним ADMIN_ID: {user_id}")
+            return False
+
+        if ADMIN_ID != PROMETEY_LABS_ID:
+            logger.error(f"⚠️ Виявлено неправильний ADMIN_ID в конфігурації: {ADMIN_ID}")
+            logger.error("🔒 Доступ заборонено для безпеки")
+            return False
+
+        logger.info(f"✅ Підтверджено адмін доступ для @PrometeyLabs")
+        return True
+
+    except Exception as e:
+        logger.error(f"❌ Помилка перевірки адмін прав: {str(e)}", exc_info=True)
         return False
-        
-    if ADMIN_ID != PROMETEY_LABS_ID:
-        logger.error(f"⚠️ Виявлено неправильний ADMIN_ID в конфігурації: {ADMIN_ID}")
-        logger.error("🔒 Доступ заборонено для безпеки")
-        return False
-        
-    return True
 
 async def is_user_authorized(user_id: int) -> bool:
     """
