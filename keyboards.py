@@ -119,11 +119,11 @@ def service_contact_keyboard(service_type: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
 
 def courses_menu(user_id: int = None) -> InlineKeyboardMarkup:
-    """Меню курсів - буде оновлюватись з ZenEdu API"""
+    """Меню курсів - синхронізація з ZenEdu API"""
     keyboard = [
         [InlineKeyboardButton(
             text="🔄 Завантажити курси з ZenEdu",
-            callback_data=f"{CALLBACK_PREFIXES['course']}load"
+            callback_data=f"{CALLBACK_PREFIXES['course']}sync"
         )]
     ]
     

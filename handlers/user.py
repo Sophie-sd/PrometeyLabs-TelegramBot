@@ -20,10 +20,10 @@ from keyboards import (
 from messages import (
     WELCOME_MESSAGE, SERVICES_MAIN_MESSAGE,
     WEBSITE_SERVICE_MESSAGE, TELEGRAM_BOT_SERVICE_MESSAGE, CRM_SERVICE_MESSAGE,
-    SOCIAL_MEDIA_SERVICE_MESSAGE, COURSES_MAIN_MESSAGE, NO_COURSES_MESSAGE,
+    SOCIAL_MEDIA_SERVICE_MESSAGE, COURSES_MAIN_MESSAGE,
     course_card_message, ONLINE_RESOURCES_MESSAGE, ABOUT_COMPANY_MESSAGE,
     PORTFOLIO_MESSAGE, WHY_US_MESSAGE, PAYMENT_INFO_MESSAGE, ERROR_MESSAGE,
-    COMMAND_NOT_FOUND_MESSAGE, COURSE_DEMO_MESSAGE
+    COMMAND_NOT_FOUND_MESSAGE
 )
 
 logger = logging.getLogger(__name__)
@@ -136,7 +136,7 @@ async def services_handler(callback: CallbackQuery):
 # Обробники блоку "Курси"
 @router.callback_query(F.data.startswith("crs:"))
 async def courses_handler(callback: CallbackQuery):
-    """Обробники курсів"""
+    """Обробники курсів - працює з ZenEdu"""
     user_id = callback.from_user.id
     await update_user_activity(user_id)
     
@@ -144,54 +144,121 @@ async def courses_handler(callback: CallbackQuery):
     
     try:
         if action == "main":
+            # Отримуємо курси з БД (синхронізовані з ZenEdu)
             courses = await get_courses()
             
             if not courses:
-                await callback.message.edit_text(
-                    NO_COURSES_MESSAGE,
-                    reply_markup=courses_menu(user_id)
-                )
-            else:
-                # Формуємо список курсів
-                keyboard = []
-                for course in courses:
-                    keyboard.append([{
-                        'text': f"🎓 {course['title']} - {course['price_uah']} ₴",
-                        'callback_data': f"crs:view_{course['id']}"
-                    }])
-                
-                keyboard.append([{
-                    'text': '⬅️ Головне меню',
-                    'callback_data': 'main_menu'
-                }])
-                
-                from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-                markup = InlineKeyboardMarkup(inline_keyboard=[
-                    [InlineKeyboardButton(text=btn['text'], callback_data=btn['callback_data'])]
-                    for row in keyboard for btn in row
+                # Пропонуємо синхронізувати курси
+                from keyboards import InlineKeyboardMarkup, InlineKeyboardButton
+                keyboard = InlineKeyboardMarkup(inline_keyboard=[
+                    [InlineKeyboardButton(
+                        text="🔄 Завантажити курси з ZenEdu", 
+                        callback_data="crs:sync"
+                    )],
+                    [InlineKeyboardButton(
+                        text="⬅️ Головне меню", 
+                        callback_data="main_menu"
+                    )]
                 ])
                 
                 await callback.message.edit_text(
-                    COURSES_MAIN_MESSAGE,
-                    reply_markup=markup
+                    "📚 **Курси PrometeyLabs**\n\n"
+                    "🔄 Курси ще не завантажені з ZenEdu платформи.\n"
+                    "Натисніть кнопку нижче для синхронізації:",
+                    reply_markup=keyboard,
+                    parse_mode="Markdown"
+                )
+            else:
+                # Показуємо доступні курси з ZenEdu
+                from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+                
+                keyboard = []
+                for course in courses:
+                    keyboard.append([InlineKeyboardButton(
+                        text=f"🎓 {course['title']} - {course['price_uah']} ₴",
+                        callback_data=f"crs:view_{course['id']}"
+                    )])
+                
+                keyboard.extend([
+                    [InlineKeyboardButton(
+                        text="🔄 Оновити з ZenEdu", 
+                        callback_data="crs:sync"
+                    )],
+                    [InlineKeyboardButton(
+                        text="⬅️ Головне меню", 
+                        callback_data="main_menu"
+                    )]
+                ])
+                
+                markup = InlineKeyboardMarkup(inline_keyboard=keyboard)
+                
+                await callback.message.edit_text(
+                    "📚 **Курси PrometeyLabs**\n\n"
+                    "🎯 Професійні курси від експертів:\n"
+                    "• Практичні завдання та проекти\n"
+                    "• Підтримка викладачів\n"
+                    "• Сертифікати після завершення\n\n"
+                    "Оберіть курс для детального перегляду:",
+                    reply_markup=markup,
+                    parse_mode="Markdown"
                 )
         
-        elif action == "load":
-            # TODO: Реалізувати завантаження з ZenEdu API
-            await callback.answer("Функція буде реалізована після налаштування ZenEdu API", show_alert=True)
-            return
+        elif action == "sync":
+            # Синхронізація курсів з ZenEdu
+            from services.zenedu_client import sync_courses
+            
+            await callback.message.edit_text(
+                "🔄 **Синхронізація з ZenEdu...**\n\n"
+                "⏳ Завантажуємо курси з платформи...",
+                parse_mode="Markdown"
+            )
+            
+            synced_count = await sync_courses()
+            
+            if synced_count > 0:
+                from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+                keyboard = InlineKeyboardMarkup(inline_keyboard=[
+                    [InlineKeyboardButton(
+                        text="📚 Переглянути курси", 
+                        callback_data="crs:main"
+                    )],
+                    [InlineKeyboardButton(
+                        text="⬅️ Головне меню", 
+                        callback_data="main_menu"
+                    )]
+                ])
+                
+                await callback.message.edit_text(
+                    f"✅ **Синхронізація завершена!**\n\n"
+                    f"📚 Завантажено курсів: {synced_count}\n"
+                    f"🔗 Джерело: ZenEdu платформа\n\n"
+                    f"Тепер ви можете переглядати та купувати курси!",
+                    reply_markup=keyboard,
+                    parse_mode="Markdown"
+                )
+            else:
+                await callback.message.edit_text(
+                    "❌ **Помилка синхронізації**\n\n"
+                    "Не вдалося завантажити курси з ZenEdu.\n"
+                    "Спробуйте пізніше або зверніться до підтримки.",
+                    reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                        [InlineKeyboardButton(text="⬅️ Головне меню", callback_data="main_menu")]
+                    ]),
+                    parse_mode="Markdown"
+                )
         
         elif action.startswith("view_"):
             course_id = int(action.split("_")[1])
             course = await get_course(course_id)
             
             if not course:
-                await callback.answer("Курс не знайдено", show_alert=True)
+                await callback.answer("❌ Курс не знайдено", show_alert=True)
                 return
             
-            # Перевіряємо доступ
+            # Перевіряємо доступ користувача до курсу
             has_access = await check_course_access(user_id, course_id)
             
+            # Формуємо повідомлення про курс
             message_text = course_card_message(
                 title=course['title'],
                 description=course['description'],
@@ -205,22 +272,22 @@ async def courses_handler(callback: CallbackQuery):
                     has_access=has_access,
                     z_link=course['z_link'],
                     price=course['price_uah']
-                )
+                ),
+                parse_mode="Markdown"
             )
         
         elif action.startswith("demo_"):
-            await callback.message.edit_text(
-                COURSE_DEMO_MESSAGE,
-                reply_markup=course_card_keyboard(
-                    course_id=int(action.split("_")[1])
-                )
+            # Демо-урок (поки що заглушка)
+            await callback.answer(
+                "🎬 Демо-уроки будуть доступні після налаштування ZenEdu платформи",
+                show_alert=True
             )
         
         await callback.answer()
         
     except Exception as e:
-        logger.error(f"Помилка в courses_handler: {e}")
-        await callback.answer("Сталася помилка", show_alert=True)
+        logger.error(f"❌ Помилка в courses_handler: {e}")
+        await callback.answer("❌ Сталася помилка", show_alert=True)
 
 # Обробники блоку "Онлайн-ресурси"
 @router.callback_query(F.data == "online_resources")
