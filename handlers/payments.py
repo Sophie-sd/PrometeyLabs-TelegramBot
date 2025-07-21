@@ -10,7 +10,7 @@ from aiogram.types import CallbackQuery, Message, InlineKeyboardMarkup, InlineKe
 from aiogram.fsm.context import FSMContext
 
 from config import CALLBACK_PREFIXES
-from db import get_course, add_purchase, grant_course_access, get_user
+from db import get_course, create_purchase, grant_course_access, get_user
 from services.zenedu_client import (
     grant_course_access_to_user, 
     get_course_access_link,
@@ -86,12 +86,11 @@ async def handle_course_purchase(callback: CallbackQuery, course_id: int):
         
         if access_granted:
             # Записуємо покупку в локальну БД
-            purchase_id = await add_purchase(
+            purchase_id = await create_purchase(
                 user_id=user_id,
                 course_id=course_id,
                 amount=course['price_uah'],
-                payment_method='zenedu',
-                payment_status='completed'
+                monobank_payment_id=f"zenedu_{course_id}_{user_id}"
             )
             
             # Отримуємо посилання доступу
@@ -269,12 +268,11 @@ async def admin_grant_course_handler(callback: CallbackQuery):
         
         if access_granted:
             # Записуємо безкоштовну покупку
-            await add_purchase(
+            await create_purchase(
                 user_id=target_user_id,
                 course_id=course_id,
                 amount=0,
-                payment_method='admin_grant',
-                payment_status='completed'
+                monobank_payment_id=f"admin_grant_{course_id}_{target_user_id}"
             )
             
             await callback.answer(f"✅ Доступ до курсу '{course['title']}' надано користувачу {target_user_id}", show_alert=True)
