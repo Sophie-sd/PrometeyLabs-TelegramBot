@@ -13,10 +13,11 @@ from pathlib import Path
 # Додаємо поточну директорію до PATH
 sys.path.insert(0, str(Path(__file__).parent))
 
-from aiogram import Bot, Dispatcher, executor
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from aiogram.contrib.middlewares.logging import LoggingMiddleware
-from aiohttp import web
+import asyncio
+from aiogram import Bot, Dispatcher
+from aiogram.client.default import DefaultBotProperties
+from aiogram.fsm.storage.memory import MemoryStorage
+from aiohttp import web, web_app
 
 from db import init_db
 from config import BOT_TOKEN, ADMIN_ID
@@ -33,12 +34,9 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Ініціалізація бота та диспетчера
-bot = Bot(token=BOT_TOKEN, parse_mode='HTML')
+bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode='HTML'))
 storage = MemoryStorage()
-dp = Dispatcher(bot, storage=storage)
-
-# Підключаємо middleware
-dp.middleware.setup(LoggingMiddleware())
+dp = Dispatcher(storage=storage)
 
 # Конфігурація для Render
 WEBHOOK_PATH = f"/webhook/{BOT_TOKEN.split(':')[0]}"
@@ -48,15 +46,25 @@ async def health_check(request):
     """Health check endpoint для Render"""
     return web.Response(text="OK", status=200)
 
-async def on_startup(dp):
+async def on_startup():
     """Функція ініціалізації при запуску"""
     try:
         # Ініціалізація бази даних
         await init_db()
         logger.info("✅ База даних ініціалізована")
         
-        # Імпортуємо хендлери (важливо робити після ініціалізації dp)
+        # Імпортуємо та підключаємо роутери з middleware
         from handlers import user, admin, payments
+        from middleware.auth import AuthMiddleware
+        
+        # Підключаємо middleware авторизації
+        dp.message.middleware(AuthMiddleware())
+        dp.callback_query.middleware(AuthMiddleware())
+        
+        # Підключаємо роутери (порядок важливий!)
+        dp.include_router(admin.router)  # Адмін роутер першим
+        dp.include_router(payments.router)
+        dp.include_router(user.router)   # Користувацький роутер останнім
         
         # Налаштування webhook для деплою
         if os.getenv("ENVIRONMENT") == "production":
@@ -77,17 +85,20 @@ async def on_startup(dp):
         logger.error(f"❌ Помилка при ініціалізації: {e}")
         raise
 
-async def on_shutdown(dp):
+async def on_shutdown():
     """Функція очищення при зупинці"""
     try:
-        await bot.session.close()
+        session = await bot.get_session()
+        await session.close()
         logger.info("✅ Бот зупинено")
     except Exception as e:
         logger.error(f"❌ Помилка при зупинці: {e}")
 
-def main():
+async def main():
     """Головна функція запуску бота"""
     try:
+        await on_startup()
+        
         # Перевіряємо режим роботи
         if os.getenv("ENVIRONMENT") == "production":
             # Режим webhook для Render
@@ -100,34 +111,31 @@ def main():
             app = web.Application()
             app.router.add_get('/health', health_check)
             
-            # Запускаємо webhook
-            executor.start_webhook(
-                dispatcher=dp,
-                webhook_path=WEBHOOK_PATH,
-                on_startup=on_startup,
-                on_shutdown=on_shutdown,
-                skip_updates=True,
-                host="0.0.0.0",
-                port=port,
-                app=app
-            )
+            # Налаштовуємо webhook
+            runner = web.AppRunner(app)
+            await runner.setup()
+            site = web.TCPSite(runner, "0.0.0.0", port)
+            await site.start()
+            
+            logger.info(f"🌐 Сервер запущено на порту {port}")
+            
+            # Запускаємо polling для обробки webhook
+            await dp.start_polling(bot, skip_updates=True)
+            
         else:
             # Режим polling для локальної розробки
             logger.info("🔄 Запуск в режимі polling для локальної розробки")
-            executor.start_polling(
-                dp,
-                skip_updates=True,
-                on_startup=on_startup,
-                on_shutdown=on_shutdown
-            )
+            await dp.start_polling(bot, skip_updates=True)
         
     except Exception as e:
         logger.error(f"❌ Помилка при запуску бота: {e}")
         raise
+    finally:
+        await on_shutdown()
 
 if __name__ == '__main__':
     try:
-        main()
+        asyncio.run(main())
     except KeyboardInterrupt:
         logger.info("🛑 Бот зупинено користувачем")
     except Exception as e:

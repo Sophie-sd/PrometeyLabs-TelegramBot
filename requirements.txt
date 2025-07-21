@@ -1,5 +1,5 @@
-# Core bot framework (стабільна версія без pydantic)
-aiogram==2.25.1
+# Core bot framework (сучасна версія 3.x)
+aiogram>=3.4.1
 
 # Database
 aiosqlite==0.20.0
