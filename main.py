@@ -16,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from aiogram import Bot, Dispatcher, executor
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
+from aiohttp import web
 
 from db import init_db
 from config import BOT_TOKEN, ADMIN_ID
@@ -42,6 +43,10 @@ dp.middleware.setup(LoggingMiddleware())
 # Конфігурація для Render
 WEBHOOK_PATH = f"/webhook/{BOT_TOKEN.split(':')[0]}"
 BASE_WEBHOOK_URL = os.getenv("WEBHOOK_URL", "https://your-app.onrender.com")
+
+async def health_check(request):
+    """Health check endpoint для Render"""
+    return web.Response(text="OK", status=200)
 
 async def on_startup(dp):
     """Функція ініціалізації при запуску"""
@@ -91,6 +96,10 @@ def main():
             # Отримуємо порт з середовища
             port = int(os.getenv("PORT", 8000))
             
+            # Створюємо веб додаток для health check
+            app = web.Application()
+            app.router.add_get('/health', health_check)
+            
             # Запускаємо webhook
             executor.start_webhook(
                 dispatcher=dp,
@@ -99,7 +108,8 @@ def main():
                 on_shutdown=on_shutdown,
                 skip_updates=True,
                 host="0.0.0.0",
-                port=port
+                port=port,
+                app=app
             )
         else:
             # Режим polling для локальної розробки

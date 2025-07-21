@@ -2,13 +2,13 @@
 aiogram==2.25.1
 
 # Database
-aiosqlite==0.19.0
+aiosqlite==0.20.0
 
-# HTTP клієнт (найстабільніша версія з pre-compiled wheels)
-aiohttp==3.8.1
+# HTTP клієнт (сумісний з Python 3.13)
+aiohttp==3.9.5
 
 # Асинхронне планування
 APScheduler==3.10.4
 
 # Конфігурація
-python-dotenv==1.0.0 
+python-dotenv==1.0.1 

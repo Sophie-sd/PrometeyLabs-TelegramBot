@@ -3,8 +3,9 @@ services:
     name: prometeylabs-telegram-bot
     runtime: python
     pythonVersion: "3.11.7"
-    buildCommand: pip install --upgrade pip && pip install --only-binary=all -r requirements.txt
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
     startCommand: python main.py
+    healthCheckPath: /health
     envVars:
       - key: BOT_TOKEN
         sync: false
