@@ -139,28 +139,42 @@ def courses_menu(user_id: int = None) -> InlineKeyboardMarkup:
 
 def course_card_keyboard(course_id: int, has_access: bool = False, 
                         z_link: str = None, price: int = None) -> InlineKeyboardMarkup:
-    """Клавіатура для картки курсу"""
+    """Клавіатура для картки курсу з підтримкою ZenEdu"""
     keyboard = []
     
-    if has_access and z_link:
-        keyboard.append([InlineKeyboardButton(
-            text="🎓 Перейти до курсу",
-            url=z_link
-        )])
+    if has_access:
+        # Користувач має доступ до курсу
+        if z_link and not z_link.startswith('zenedu://'):
+            # Пряме посилання
+            keyboard.append([InlineKeyboardButton(
+                text="🎓 Перейти до курсу",
+                url=z_link
+            )])
+        else:
+            # Отримання доступу через ZenEdu
+            keyboard.append([InlineKeyboardButton(
+                text="🚀 Розпочати навчання",
+                callback_data=f"{CALLBACK_PREFIXES['payment']}access_{course_id}"
+            )])
     elif price and not has_access:
+        # Користувач не має доступу, показуємо опції покупки
         keyboard.extend([
             [InlineKeyboardButton(
                 text="🔍 Демо-урок",
                 callback_data=f"{CALLBACK_PREFIXES['course']}demo_{course_id}"
             )],
             [InlineKeyboardButton(
-                text=f"💳 Придбати за {price} ₴",
-                callback_data=f"{CALLBACK_PREFIXES['payment']}course_{course_id}"
+                text=f"💳 Купити за {price} ₴",
+                callback_data=f"{CALLBACK_PREFIXES['payment']}buy_{course_id}"
+            )],
+            [InlineKeyboardButton(
+                text="💰 Методи оплати",
+                callback_data=f"{CALLBACK_PREFIXES['payment']}methods"
             )]
         ])
     
     keyboard.append([InlineKeyboardButton(
-        text="⬅️ Курси",
+        text="⬅️ До курсів",
         callback_data=f"{CALLBACK_PREFIXES['course']}main"
     )])
     

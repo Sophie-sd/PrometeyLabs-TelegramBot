@@ -20,13 +20,15 @@ ADMIN_ID=7603163573
 # Monobank API (опціонально)
 MONOBANK_JAR_ID=your_monobank_jar_id_here
 
-# ZenEdu API (опціонально)
-ZENEDU_API_KEY=your_zenedu_api_key_here
+# ZenEdu API для продажу курсів
+ZENEDU_API_URL=https://api.zenedu.io/v1
+ZENEDU_API_KEY=aKKYBIMaR92RXBxfR2Wp12G9CtFIB6k8E9EJabAM883db9a6
+ZENEDU_WEBHOOK_SECRET=your_webhook_secret_here
 """
     try:
         with open('.env', 'w', encoding='utf-8') as f:
             f.write(env_content)
-        print("✅ Створено .env файл з правильним токеном та ADMIN_ID=7603163573 (@PrometeyLabs)")
+        print("✅ Створено .env файл з правильним токеном та ZenEdu API")
     except Exception as e:
         print(f"⚠️ Не вдалося створити .env файл: {e}")
 
@@ -62,9 +64,14 @@ except ValueError:
 MONOBANK_JAR_ID = os.getenv('MONOBANK_JAR_ID')
 
 # ZenEdu configuration
-ZENEDU_API_URL = os.getenv('ZENEDU_API_URL', 'https://api.zenedu.io')
-ZENEDU_API_KEY = os.getenv('ZENEDU_API_KEY')
+ZENEDU_API_URL = os.getenv('ZENEDU_API_URL', 'https://api.zenedu.io/v1')
+ZENEDU_API_KEY = os.getenv('ZENEDU_API_KEY', 'aKKYBIMaR92RXBxfR2Wp12G9CtFIB6k8E9EJabAM883db9a6')
 ZENEDU_WEBHOOK_SECRET = os.getenv('ZENEDU_WEBHOOK_SECRET')
+
+# Якщо API ключ не встановлений в .env, використовуємо за замовчуванням
+if not ZENEDU_API_KEY or ZENEDU_API_KEY == 'your_zenedu_api_key_here':
+    ZENEDU_API_KEY = 'aKKYBIMaR92RXBxfR2Wp12G9CtFIB6k8E9EJabAM883db9a6'
+    print("✅ Встановлено ZenEdu API ключ для продажу курсів")
 
 # Database configuration
 DATABASE_PATH = os.getenv('DATABASE_PATH', 'bot_database.db')
