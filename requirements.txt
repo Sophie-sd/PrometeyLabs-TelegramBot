@@ -4,8 +4,8 @@ aiogram==2.25.1
 # Database
 aiosqlite==0.19.0
 
-# HTTP клієнт (стабільна версія БЕЗ PyLongObject проблем)
-aiohttp==3.8.5
+# HTTP клієнт (найстабільніша версія з pre-compiled wheels)
+aiohttp==3.8.1
 
 # Асинхронне планування
 APScheduler==3.10.4

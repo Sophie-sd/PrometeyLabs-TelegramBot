@@ -2,7 +2,8 @@ services:
   - type: web
     name: prometeylabs-telegram-bot
     runtime: python
-    buildCommand: pip install -r requirements.txt
+    pythonVersion: "3.11.7"
+    buildCommand: pip install --upgrade pip && pip install --only-binary=all -r requirements.txt
     startCommand: python main.py
     envVars:
       - key: BOT_TOKEN
