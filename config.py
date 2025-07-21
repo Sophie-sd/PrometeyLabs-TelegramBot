@@ -132,5 +132,16 @@ CACHE_TTL = 1800  # 30 хвилин
 
 # Environment configuration для Render
 ENVIRONMENT = os.getenv('ENVIRONMENT', 'development')  # production або development
-WEBHOOK_URL = os.getenv('WEBHOOK_URL', 'https://prometeylabs-telegram-bot-90mo.onrender.com')
+
+# АВТОМАТИЧНЕ ВИПРАВЛЕННЯ WEBHOOK_URL для Render
+raw_webhook_url = os.getenv('WEBHOOK_URL', 'https://prometeylabs-telegram-bot-90mo.onrender.com')
+
+# Перевіряємо і виправляємо неправильний URL автоматично
+if raw_webhook_url == 'https://prometeylabs-telegram-bot.onrender.com':
+    # Автоматично виправляємо на правильний URL
+    WEBHOOK_URL = 'https://prometeylabs-telegram-bot-90mo.onrender.com'
+    print("🔧 Автоматично виправлено WEBHOOK_URL на правильний домен")
+else:
+    WEBHOOK_URL = raw_webhook_url
+
 PORT = int(os.getenv('PORT', 8000)) 
