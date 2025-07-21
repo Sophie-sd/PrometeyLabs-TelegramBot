@@ -1,14 +1,10 @@
 services:
   - type: web
     name: prometeylabs-telegram-bot
-    env: python
-    buildCommand: pip install --upgrade pip && pip install --only-binary=all -r requirements.txt
-    startCommand: gunicorn main:app --bind 0.0.0.0:$PORT --timeout 120 --workers 1
-    plan: free
-    healthCheckPath: /health
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py
     envVars:
-      - key: ENVIRONMENT
-        value: production
       - key: BOT_TOKEN
         sync: false
       - key: ADMIN_ID
@@ -20,4 +16,6 @@ services:
       - key: ZENEDU_API_KEY
         value: aKKYBIMaR92RXBxfR2Wp12G9CtFIB6k8E9EJabAM883db9a6
       - key: DATABASE_PATH
-        value: bot_database.db 
+        value: bot_database.db
+      - key: ENVIRONMENT
+        value: production 

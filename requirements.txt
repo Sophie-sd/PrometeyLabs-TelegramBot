@@ -1,12 +1,11 @@
-# Core bot framework (версія 2.x без pydantic)
+# Core bot framework (стабільна версія без pydantic)
 aiogram==2.25.1
 
 # Database
 aiosqlite==0.19.0
 
-# HTTP клієнт та веб-сервер (сумісна версія)
-aiohttp>=3.8.0,<3.9.0
-gunicorn==21.2.0
+# HTTP клієнт (стабільна версія БЕЗ PyLongObject проблем)
+aiohttp==3.8.5
 
 # Асинхронне планування
 APScheduler==3.10.4

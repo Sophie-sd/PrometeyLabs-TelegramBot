@@ -16,9 +16,6 @@ sys.path.insert(0, str(Path(__file__).parent))
 from aiogram import Bot, Dispatcher, executor
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
-from aiohttp import web
-from aiohttp.web_request import Request
-from aiohttp.web_response import Response
 
 from db import init_db
 from config import BOT_TOKEN, ADMIN_ID
@@ -44,7 +41,6 @@ dp.middleware.setup(LoggingMiddleware())
 
 # Конфігурація для Render
 WEBHOOK_PATH = f"/webhook/{BOT_TOKEN.split(':')[0]}"
-WEBHOOK_SECRET = "PrometeyLabs_webhook_secret_2025"
 BASE_WEBHOOK_URL = os.getenv("WEBHOOK_URL", "https://your-app.onrender.com")
 
 async def on_startup(dp):
@@ -84,50 +80,27 @@ async def on_shutdown(dp):
     except Exception as e:
         logger.error(f"❌ Помилка при зупинці: {e}")
 
-async def health_check(request: Request) -> Response:
-    """Health check для Render"""
-    return Response(
-        text="PrometeyLabs Bot OK",
-        status=200,
-        headers={"Content-Type": "text/plain"}
-    )
-
-def create_app() -> web.Application:
-    """Створення aiohttp додатку для webhook"""
-    # Створюємо веб-додаток
-    app = web.Application()
-    
-    # Додаємо health check endpoint
-    app.router.add_get("/health", health_check)
-    app.router.add_get("/", health_check)
-    
-    # Налаштовуємо webhook для продакшн
-    if os.getenv("ENVIRONMENT") == "production":
-        from aiogram.utils.executor import set_webhook
-        
-        # Налаштовуємо webhook
-        executor.set_webhook(
-            dispatcher=dp,
-            webhook_path=WEBHOOK_PATH,
-            web_app=app,
-            skip_updates=True,
-            on_startup=on_startup,
-            on_shutdown=on_shutdown
-        )
-    
-    return app
-
-# Створення додатку для gunicorn
-app = create_app()
-
 def main():
     """Головна функція запуску бота"""
     try:
         # Перевіряємо режим роботи
         if os.getenv("ENVIRONMENT") == "production":
-            # Режим webhook для Render - app вже створено вище
+            # Режим webhook для Render
             logger.info("🚀 Запуск в режимі webhook для Render")
-            return app
+            
+            # Отримуємо порт з середовища
+            port = int(os.getenv("PORT", 8000))
+            
+            # Запускаємо webhook
+            executor.start_webhook(
+                dispatcher=dp,
+                webhook_path=WEBHOOK_PATH,
+                on_startup=on_startup,
+                on_shutdown=on_shutdown,
+                skip_updates=True,
+                host="0.0.0.0",
+                port=port
+            )
         else:
             # Режим polling для локальної розробки
             logger.info("🔄 Запуск в режимі polling для локальної розробки")
