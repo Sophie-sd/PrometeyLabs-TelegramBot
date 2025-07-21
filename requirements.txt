@@ -1,5 +1,5 @@
-# Core bot framework (старіша стабільна версія)
-aiogram==3.3.0
+# Core bot framework (версія 2.x без pydantic)
+aiogram==2.25.1
 
 # Database
 aiosqlite==0.19.0
@@ -13,7 +13,4 @@ uvicorn==0.24.0
 APScheduler==3.10.4
 
 # Конфігурація
-python-dotenv==1.0.0
-
-# Зафіксована версія pydantic без компіляції
-pydantic==2.4.2 
+python-dotenv==1.0.0 
