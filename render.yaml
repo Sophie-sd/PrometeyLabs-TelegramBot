@@ -12,7 +12,7 @@ services:
       - key: ADMIN_ID
         value: "7603163573"
       - key: WEBHOOK_URL
-        value: "https://prometeylabs-telegram-bot.onrender.com"
+        value: "https://prometeylabs-telegram-bot-90mo.onrender.com"
       - key: ZENEDU_API_URL
         value: https://api.zenedu.io/v1
       - key: ZENEDU_API_KEY

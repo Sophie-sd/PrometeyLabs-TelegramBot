@@ -154,14 +154,16 @@ async def create_webhook_app():
     webhook_requests_handler = SimpleRequestHandler(
         dispatcher=dp,
         bot=bot,
+        secret_token=None  # Можна додати секретний токен для безпеки
     )
     webhook_requests_handler.register(app, path=WEBHOOK_PATH)
     
-    # Налаштовуємо додаток
-    setup_application(app, dp, bot=bot)
+    # Альтернативний спосіб реєстрації
+    # app.router.add_post(WEBHOOK_PATH, webhook_requests_handler.handle)
     
     logger.info(f"🌐 Webhook додаток створено")
     logger.info(f"📡 Webhook endpoint: {WEBHOOK_PATH}")
+    logger.info(f"🎯 Повний webhook URL: {WEBHOOK_URL}{WEBHOOK_PATH}")
     
     return app
 
