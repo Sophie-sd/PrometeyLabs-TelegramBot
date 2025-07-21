@@ -3,7 +3,7 @@ services:
     name: prometeylabs-telegram-bot
     env: python
     buildCommand: pip install --upgrade pip && pip install --only-binary=all -r requirements.txt
-    startCommand: gunicorn -k uvicorn.workers.UvicornWorker main:app --bind 0.0.0.0:$PORT --timeout 120 --workers 1
+    startCommand: gunicorn main:app --bind 0.0.0.0:$PORT --timeout 120 --workers 1
     plan: free
     healthCheckPath: /health
     envVars:

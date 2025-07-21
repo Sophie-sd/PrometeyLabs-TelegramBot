@@ -101,33 +101,33 @@ def create_app() -> web.Application:
     app.router.add_get("/health", health_check)
     app.router.add_get("/", health_check)
     
-    # Налаштовуємо webhook тільки для продакшн
+    # Налаштовуємо webhook для продакшн
     if os.getenv("ENVIRONMENT") == "production":
         from aiogram.utils.executor import set_webhook
         
-        # Налаштовуємо webhook через executor
+        # Налаштовуємо webhook
         executor.set_webhook(
             dispatcher=dp,
             webhook_path=WEBHOOK_PATH,
             web_app=app,
             skip_updates=True,
             on_startup=on_startup,
-            on_shutdown=on_shutdown,
-            host="0.0.0.0",
-            port=int(os.getenv("PORT", 8000))
+            on_shutdown=on_shutdown
         )
     
     return app
+
+# Створення додатку для gunicorn
+app = create_app()
 
 def main():
     """Головна функція запуску бота"""
     try:
         # Перевіряємо режим роботи
         if os.getenv("ENVIRONMENT") == "production":
-            # Режим webhook для Render
+            # Режим webhook для Render - app вже створено вище
             logger.info("🚀 Запуск в режимі webhook для Render")
-            # Додаток буде запущено через create_app()
-            return create_app()
+            return app
         else:
             # Режим polling для локальної розробки
             logger.info("🔄 Запуск в режимі polling для локальної розробки")
@@ -141,9 +141,6 @@ def main():
     except Exception as e:
         logger.error(f"❌ Помилка при запуску бота: {e}")
         raise
-
-# Створення додатку для ASGI серверів (Gunicorn/Uvicorn)
-app = create_app()
 
 if __name__ == '__main__':
     try:
