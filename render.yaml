@@ -2,7 +2,7 @@ services:
   - type: web
     name: prometeylabs-telegram-bot
     runtime: python
-    pythonVersion: "3.11.7"
+    pythonVersion: "3.11"
     buildCommand: pip install --upgrade pip && pip install -r requirements.txt
     startCommand: python main.py
     healthCheckPath: /health
