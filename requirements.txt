@@ -4,10 +4,9 @@ aiogram==2.25.1
 # Database
 aiosqlite==0.19.0
 
-# HTTP клієнт та веб-сервер
-aiohttp==3.9.1
+# HTTP клієнт та веб-сервер (сумісна версія)
+aiohttp>=3.8.0,<3.9.0
 gunicorn==21.2.0
-uvicorn==0.24.0
 
 # Асинхронне планування
 APScheduler==3.10.4
